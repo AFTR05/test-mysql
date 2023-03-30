@@ -8,7 +8,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
-public class Main {
+public class MainProducto {
     public static void main(String[] args) {
         try (Connection conn = ConnectionBD.getInstance()){
             ProductServiceImpl productService=new ProductServiceImpl();

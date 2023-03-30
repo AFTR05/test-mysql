@@ -17,6 +17,7 @@ public class Product {
     private Double price;
     private LocalDate date_register;
 
+
     public Product(String product_name, Double price, LocalDate date_register) {
         this.product_name = product_name;
         this.price = price;

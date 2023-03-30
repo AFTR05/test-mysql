@@ -1,6 +1,7 @@
 package org.example.repository.impl;
 
 import org.example.ConnectionBD;
+import org.example.model.Category;
 import org.example.model.Product;
 import org.example.model.ProductCategory;
 import org.example.repository.Repository;
@@ -9,28 +10,31 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
-public class ProductRepositoryImp implements Repository {
+public class ProductCategoryRepostoryImp implements Repository {
     private Connection getConnection() throws SQLException {
         return ConnectionBD.getInstance();
     }
 
-    private Product createProduct(ResultSet resultSet) throws SQLException {
-        Product product = new Product();
+    private ProductCategory createProduct(ResultSet resultSet) throws SQLException {
+        ProductCategory product = new ProductCategory();
         product.setId(resultSet.getInt("id"));
         product.setProduct_name(resultSet.getString("product_name"));
         product.setPrice(resultSet.getDouble("price"));
         product.setDate_register(resultSet.getDate("date_register").toLocalDate());
+        Category category = new Category();
+        category.setId(resultSet.getInt("id_category"));
+        category.setName(resultSet.getString("category_name"));
+        product.setCategory(category);
         return product;
     }
     @Override
-    public List<Product> list() {
-        List<Product> products = new ArrayList<>();
+    public List<ProductCategory> list() {
+        List<ProductCategory> products = new ArrayList<>();
         try (Statement statement=getConnection().createStatement();
-             ResultSet resultSet=statement.executeQuery("SELECT * FROM products")
+             ResultSet resultSet=statement.executeQuery("SELECT p.id,p.product_name,p.price,p.date_register,p.id_category,c.category_name FROM products_category as p join categories as c on(p.id_category=c.id)")
         ){
             while (resultSet.next()) {
-                Product product = createProduct(resultSet);
+                ProductCategory product = createProduct(resultSet);
                 products.add(product);
             }
         }catch (SQLException e) {
@@ -40,9 +44,9 @@ public class ProductRepositoryImp implements Repository {
     }
 
     @Override
-    public Product byId(Long id) {
-        Product product = null;
-        try (PreparedStatement preparedStatement=getConnection().prepareStatement("SELECT * FROM products WHERE id =?")){
+    public ProductCategory byId(Long id) {
+        ProductCategory product = null;
+        try (PreparedStatement preparedStatement=getConnection().prepareStatement("SELECT p.id,p.product_name,p.price,p.date_register,p.id_category,c.category_name FROM products_category as p join categories as c on(p.id_category=c.id) where p.id=?")){
             preparedStatement.setLong(1,id);
             ResultSet resultSet=preparedStatement.executeQuery();
             if(resultSet.next()) {
@@ -57,11 +61,12 @@ public class ProductRepositoryImp implements Repository {
 
     @Override
     public void save(Object o) {
-        Product product = (Product) o;
-        try (PreparedStatement preparedStatement=getConnection().prepareStatement("INSERT INTO products(product_name,price,date_register) VALUES (?,?,?)")){
+        ProductCategory product = (ProductCategory) o;
+        try (PreparedStatement preparedStatement=getConnection().prepareStatement("INSERT INTO products_category(product_name,price,date_register,id_category) VALUES (?,?,?,?)")){
             preparedStatement.setString(1,product.getProduct_name());
             preparedStatement.setLong(2,product.getPrice().longValue());
             preparedStatement.setDate(3,Date.valueOf(product.getDate_register()));
+            preparedStatement.setLong(4,product.getCategory().getId());
             preparedStatement.executeUpdate();
             preparedStatement.close();
         }catch (SQLException e) {
@@ -71,8 +76,8 @@ public class ProductRepositoryImp implements Repository {
 
     @Override
     public void delete(Long id) {
-        Product product = null;
-        try (PreparedStatement preparedStatement=getConnection().prepareStatement("DELETE FROM products WHERE id =?")){
+        ProductCategory product = null;
+        try (PreparedStatement preparedStatement=getConnection().prepareStatement("DELETE FROM products_category WHERE id =?")){
             preparedStatement.setLong(1,id);
             preparedStatement.executeUpdate();
             preparedStatement.close();
@@ -84,12 +89,13 @@ public class ProductRepositoryImp implements Repository {
 
     @Override
     public void update(Long id,Object o) {
-        Product product = (Product) o;
-        try (PreparedStatement preparedStatement=getConnection().prepareStatement("UPDATE products SET product_name=? ,price=?,date_register=? where id=?")){
+        ProductCategory product = (ProductCategory) o;
+        try (PreparedStatement preparedStatement=getConnection().prepareStatement("UPDATE products_category SET product_name=? ,price=?,date_register=?,id_category=? where id=?")){
             preparedStatement.setString(1,product.getProduct_name());
             preparedStatement.setLong(2,product.getPrice().longValue());
             preparedStatement.setDate(3,Date.valueOf(product.getDate_register()));
-            preparedStatement.setLong(4,id);
+            preparedStatement.setLong(4,product.getCategory().getId());
+            preparedStatement.setLong(5,id);
             preparedStatement.executeUpdate();
             preparedStatement.close();
         }catch (SQLException e) {
